@@ -78,12 +78,12 @@ export default function LandingPage() {
               {
                 icon: '🔗',
                 title: 'Your own booking link',
-                desc: 'Get a professional booking page at bookeasy.com/yourbusiness — share it anywhere in seconds.',
+                desc: 'Get a professional booking page at simple-g.com/yourbusiness — share it anywhere in seconds.',
               },
               {
                 icon: '📅',
                 title: 'Smart scheduling',
-                desc: 'Set your working hours and available services. BookEasy handles the rest — no double bookings, ever.',
+                desc: 'Set your working hours and available services. Simple-G handles the rest — no double bookings, ever.',
               },
               {
                 icon: '📧',
@@ -218,7 +218,7 @@ export default function LandingPage() {
             Ready to stop playing phone tag?
           </h2>
           <p className="text-xl text-gray-400 mb-10">
-            Join thousands of small businesses that use BookEasy to fill their calendars effortlessly.
+            Join thousands of small businesses that use Simple-G to fill their calendars effortlessly.
           </p>
           <Link
             href="/register"
@@ -241,9 +241,9 @@ export default function LandingPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>
-            <span className="text-white font-semibold">BookEasy</span>
+            <span className="text-white font-semibold">Simple-G</span>
           </div>
-          <p className="text-gray-500 text-sm">© {new Date().getFullYear()} BookEasy. All rights reserved.</p>
+          <p className="text-gray-500 text-sm">© {new Date().getFullYear()} Simple-G. All rights reserved.</p>
           <div className="flex gap-6 text-sm text-gray-500">
             <Link href="/login" className="hover:text-gray-300 transition-colors">Log in</Link>
             <Link href="/register" className="hover:text-gray-300 transition-colors">Sign up</Link>

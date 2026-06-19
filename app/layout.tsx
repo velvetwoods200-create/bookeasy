@@ -6,11 +6,11 @@ import SessionProvider from '@/components/SessionProvider';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'BookEasy — Appointment Booking for Small Businesses',
+  title: 'Simple-G — Appointment Booking for Small Businesses',
   description:
     'The simplest way for small businesses to accept online appointment bookings. Set up your booking page in minutes.',
   openGraph: {
-    title: 'BookEasy',
+    title: 'Simple-G',
     description: 'Simple appointment booking for modern businesses.',
     type: 'website',
   },

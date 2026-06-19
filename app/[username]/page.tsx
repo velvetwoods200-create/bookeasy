@@ -101,7 +101,7 @@ export default async function BookingPage({ params }: { params: { username: stri
           </div>
           <div className="text-right">
             <p className="text-xs text-gray-400">Powered by</p>
-            <p className="text-sm font-semibold text-indigo-600">BookEasy</p>
+            <p className="text-sm font-semibold text-indigo-600">Simple-G</p>
           </div>
         </div>
       </div>

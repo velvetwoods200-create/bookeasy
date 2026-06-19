@@ -40,7 +40,7 @@ export default function DashboardNav() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
-          <span className="text-lg font-bold text-gray-900">BookEasy</span>
+          <span className="text-lg font-bold text-gray-900">Simple-G</span>
         </Link>
       </div>
 
@@ -56,7 +56,7 @@ export default function DashboardNav() {
             target="_blank"
             className="text-xs text-indigo-600 hover:text-indigo-700 flex items-center gap-1 mt-1"
           >
-            bookeasy.com/{session.user.slug}
+            simple-g.com/{session.user.slug}
             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
             </svg>
