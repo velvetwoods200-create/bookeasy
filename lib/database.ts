@@ -1,14 +1,11 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import ws from 'ws';
-
-neonConfig.webSocketConstructor = ws;
+import { Pool } from 'pg';
 
 let pool: Pool | null = null;
 let dbInitialized = false;
 
 function getPool(): Pool {
   if (!pool) {
-    pool = new Pool({ connectionString: process.env.DATABASE_URL! });
+    pool = new Pool({ connectionString: process.env.DATABASE_URL });
   }
   return pool;
 }
