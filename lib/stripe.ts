@@ -1,6 +1,9 @@
 import Stripe from 'stripe';
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+if (!process.env.STRIPE_SECRET_KEY) throw new Error('STRIPE_SECRET_KEY is not set');
+if (!process.env.STRIPE_PRICE_ID) throw new Error('STRIPE_PRICE_ID is not set');
+
+export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2023-10-16',
 });
 
@@ -33,7 +36,8 @@ export async function createCheckoutSession(
     },
   });
 
-  return session.url!;
+  if (!session.url) throw new Error('Stripe did not return a checkout URL');
+  return session.url;
 }
 
 export async function createPortalSession(customerId: string, returnUrl: string): Promise<string> {

@@ -1,9 +1,14 @@
-import { Pool } from 'pg';
+import { Pool, types } from 'pg';
+
+// pg returns NUMERIC and BIGINT as strings by default — parse them as numbers
+types.setTypeParser(20, (val) => parseInt(val, 10));   // BIGINT (int8)
+types.setTypeParser(1700, (val) => parseFloat(val));   // NUMERIC/DECIMAL
 
 let pool: Pool | null = null;
-let dbInitialized = false;
+let initPromise: Promise<void> | null = null;
 
 function getPool(): Pool {
+  if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL environment variable is not set');
   if (!pool) {
     pool = new Pool({ connectionString: process.env.DATABASE_URL });
   }
@@ -15,8 +20,7 @@ function toPostgres(query: string): string {
   return query.replace(/\?/g, () => `$${++i}`);
 }
 
-export async function initDb(): Promise<void> {
-  if (dbInitialized) return;
+async function _initDb(): Promise<void> {
   const p = getPool();
   await p.query(`
     CREATE TABLE IF NOT EXISTS users (
@@ -72,7 +76,11 @@ export async function initDb(): Promise<void> {
       created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
     )
   `);
-  dbInitialized = true;
+}
+
+export function initDb(): Promise<void> {
+  if (!initPromise) initPromise = _initDb();
+  return initPromise;
 }
 
 async function query(sql: string, params: unknown[]) {

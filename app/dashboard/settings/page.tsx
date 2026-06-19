@@ -156,7 +156,7 @@ export default function SettingsPage() {
   async function deleteService(id: number) {
     if (!confirm('Delete this service? Existing bookings will not be affected.')) return;
     await fetch(`/api/services/${id}`, { method: 'DELETE' });
-    fetchServices();
+    await fetchServices();
   }
 
   async function saveHours(e: React.FormEvent) {

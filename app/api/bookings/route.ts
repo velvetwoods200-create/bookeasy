@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
       bookingId,
     };
 
-    void Promise.all([
+    await Promise.all([
       sendBookingConfirmationToCustomer(emailData).catch(console.error),
       sendBookingNotificationToBusiness(emailData).catch(console.error),
     ]);

@@ -10,7 +10,8 @@ import { Suspense } from 'react';
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
+  const raw = searchParams.get('callbackUrl') || '/dashboard';
+  const callbackUrl = raw.startsWith('/') ? raw : '/dashboard';
 
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');

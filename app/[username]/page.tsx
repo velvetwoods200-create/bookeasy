@@ -1,5 +1,8 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { cache } from 'react';
+import { dbGet, dbAll, DbUser, DbWorkingHours } from '@/lib/database';
+import { isSubscriptionActive } from '@/lib/stripe';
 import BookingForm from './BookingForm';
 
 interface Business {
@@ -25,12 +28,36 @@ interface WorkingHour {
   is_active: number;
 }
 
-async function getBusinessData(username: string) {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-  const res = await fetch(`${baseUrl}/api/business/${username}`, { cache: 'no-store' });
-  if (!res.ok) return null;
-  return res.json();
-}
+const getBusinessData = cache(async (username: string) => {
+  const user = await dbGet<DbUser>(
+    'SELECT id, name, email, slug, business_name, subscription_status, trial_end FROM users WHERE slug = ?',
+    username.toLowerCase()
+  );
+  if (!user) return null;
+
+  const services = await dbAll<Service>(
+    'SELECT id, name, duration, price FROM services WHERE user_id = ? ORDER BY created_at ASC',
+    user.id
+  );
+
+  const workingHours = await dbAll<DbWorkingHours>(
+    'SELECT * FROM working_hours WHERE user_id = ? ORDER BY day_of_week ASC',
+    user.id
+  );
+
+  return {
+    business: {
+      id: user.id,
+      name: user.business_name || user.name,
+      email: user.email,
+      slug: user.slug,
+      isActive: isSubscriptionActive(user.subscription_status, user.trial_end),
+      subscriptionStatus: user.subscription_status,
+    } as Business,
+    services,
+    workingHours,
+  };
+});
 
 export async function generateMetadata({
   params,
@@ -50,11 +77,7 @@ export default async function BookingPage({ params }: { params: { username: stri
 
   if (!data) notFound();
 
-  const { business, services, workingHours } = data as {
-    business: Business;
-    services: Service[];
-    workingHours: WorkingHour[];
-  };
+  const { business, services, workingHours } = data;
 
   if (!business.isActive) {
     return (
@@ -65,9 +88,7 @@ export default async function BookingPage({ params }: { params: { username: stri
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h1 className="text-xl font-bold text-gray-900 mb-2">
-            Online booking unavailable
-          </h1>
+          <h1 className="text-xl font-bold text-gray-900 mb-2">Online booking unavailable</h1>
           <p className="text-gray-500 text-sm">
             <strong>{business.name}</strong> is not currently accepting online bookings. Please
             contact them directly to schedule an appointment.
@@ -92,7 +113,6 @@ export default async function BookingPage({ params }: { params: { username: stri
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-      {/* Header */}
       <div className="bg-white border-b border-gray-100 py-5 px-4">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <div>
@@ -106,7 +126,6 @@ export default async function BookingPage({ params }: { params: { username: stri
         </div>
       </div>
 
-      {/* Booking form */}
       <div className="max-w-2xl mx-auto px-4 py-8">
         <BookingForm
           business={business}

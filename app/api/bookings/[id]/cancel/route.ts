@@ -32,7 +32,7 @@ export async function POST(
       Number(session.user.id)
     );
 
-    sendCancellationEmail({
+    await sendCancellationEmail({
       customerName: booking.customer_name,
       customerEmail: booking.customer_email,
       businessName: business?.business_name || business?.name || 'The business',
