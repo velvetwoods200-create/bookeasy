@@ -1,7 +1,7 @@
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
-import { dbGet, initDb, DbUser } from './database';
+import { dbGet, DbUser } from './database';
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -15,8 +15,7 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.email || !credentials?.password) return null;
 
         try {
-          await initDb();
-          const user = await dbGet<DbUser>('SELECT * FROM users WHERE email = ?', credentials.email);
+          const user = await dbGet<DbUser>('SELECT * FROM users WHERE email = ?', credentials.email.toLowerCase());
 
           if (!user) return null;
 

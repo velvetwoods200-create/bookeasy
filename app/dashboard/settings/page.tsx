@@ -185,7 +185,7 @@ export default function SettingsPage() {
     );
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://bookeasy.com');
+  const appUrl = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || 'https://simple-g.com');
 
   return (
     <div className="p-6 lg:p-8 max-w-3xl mx-auto">
@@ -227,7 +227,7 @@ export default function SettingsPage() {
             <label htmlFor="slug">Booking page URL</label>
             <div className="flex items-center gap-0">
               <span className="px-3 py-2 bg-gray-50 border border-r-0 border-gray-300 rounded-l-lg text-sm text-gray-500 whitespace-nowrap">
-                bookeasy.com/
+                simple-g.com/
               </span>
               <input
                 id="slug"

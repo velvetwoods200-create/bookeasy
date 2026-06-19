@@ -4,6 +4,7 @@ import ws from 'ws';
 neonConfig.webSocketConstructor = ws;
 
 let pool: Pool | null = null;
+let dbInitialized = false;
 
 function getPool(): Pool {
   if (!pool) {
@@ -18,6 +19,7 @@ function toPostgres(query: string): string {
 }
 
 export async function initDb(): Promise<void> {
+  if (dbInitialized) return;
   const p = getPool();
   await p.query(`
     CREATE TABLE IF NOT EXISTS users (
@@ -73,20 +75,26 @@ export async function initDb(): Promise<void> {
       created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
     )
   `);
+  dbInitialized = true;
 }
 
-export async function dbGet<T>(query: string, ...params: unknown[]): Promise<T | undefined> {
-  const result = await getPool().query(toPostgres(query), params);
+async function query(sql: string, params: unknown[]) {
+  await initDb();
+  return getPool().query(toPostgres(sql), params);
+}
+
+export async function dbGet<T>(sql: string, ...params: unknown[]): Promise<T | undefined> {
+  const result = await query(sql, params);
   return result.rows[0] as T | undefined;
 }
 
-export async function dbAll<T>(query: string, ...params: unknown[]): Promise<T[]> {
-  const result = await getPool().query(toPostgres(query), params);
+export async function dbAll<T>(sql: string, ...params: unknown[]): Promise<T[]> {
+  const result = await query(sql, params);
   return result.rows as T[];
 }
 
-export async function dbRun(query: string, ...params: unknown[]): Promise<void> {
-  await getPool().query(toPostgres(query), params);
+export async function dbRun(sql: string, ...params: unknown[]): Promise<void> {
+  await query(sql, params);
 }
 
 export interface DbUser {

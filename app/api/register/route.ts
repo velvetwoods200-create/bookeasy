@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { dbGet, dbRun, initDb } from '@/lib/database';
+import { dbGet, dbRun } from '@/lib/database';
 import { createStripeCustomer } from '@/lib/stripe';
 
 export async function POST(request: NextRequest) {
@@ -20,8 +20,6 @@ export async function POST(request: NextRequest) {
     if (!emailRegex.test(email)) {
       return NextResponse.json({ error: 'Please enter a valid email address.' }, { status: 400 });
     }
-
-    await initDb();
 
     const existing = await dbGet<{ id: number }>('SELECT id FROM users WHERE email = ?', email.toLowerCase());
     if (existing) {

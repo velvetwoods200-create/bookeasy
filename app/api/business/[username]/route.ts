@@ -7,7 +7,10 @@ export async function GET(
   { params }: { params: { username: string } }
 ) {
   try {
-    const user = await dbGet<DbUser>('SELECT * FROM users WHERE slug = ?', params.username.toLowerCase());
+    const user = await dbGet<DbUser>(
+      'SELECT id, name, email, slug, business_name, subscription_status, trial_end FROM users WHERE slug = ?',
+      params.username.toLowerCase()
+    );
 
     if (!user) {
       return NextResponse.json({ error: 'Business not found.' }, { status: 404 });

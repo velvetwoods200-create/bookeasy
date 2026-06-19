@@ -28,6 +28,7 @@ export async function createCheckoutSession(
     cancel_url: `${returnUrl}/dashboard?subscription=cancelled`,
     metadata: { userId: String(userId) },
     subscription_data: {
+      trial_period_days: 14,
       metadata: { userId: String(userId) },
     },
   });
@@ -49,7 +50,7 @@ export function isSubscriptionActive(
 ): boolean {
   if (status === 'active') return true;
   if (status === 'trialing') {
-    if (!trialEnd) return true;
+    if (!trialEnd) return false;
     return Date.now() / 1000 < trialEnd;
   }
   return false;

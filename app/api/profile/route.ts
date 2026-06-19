@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { dbGet, dbRun } from '@/lib/database';
+import { dbGet, dbRun, DbUser } from '@/lib/database';
 
 export async function PUT(request: NextRequest) {
   try {
@@ -15,7 +15,11 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Business name is required.' }, { status: 400 });
     }
 
-    if (slug) {
+    // Fetch current user to preserve slug if not changing it
+    const currentUser = await dbGet<DbUser>('SELECT slug FROM users WHERE id = ?', Number(session.user.id));
+    let newSlug = currentUser?.slug ?? null;
+
+    if (slug && slug.trim() !== '') {
       const slugRegex = /^[a-z0-9-]+$/;
       if (!slugRegex.test(slug)) {
         return NextResponse.json(
@@ -23,38 +27,33 @@ export async function PUT(request: NextRequest) {
           { status: 400 }
         );
       }
-
       if (slug.length < 3 || slug.length > 50) {
         return NextResponse.json(
           { error: 'Booking URL must be between 3 and 50 characters.' },
           { status: 400 }
         );
       }
-
       const existingSlug = await dbGet(
         'SELECT id FROM users WHERE slug = ? AND id != ?',
-        slug, Number(session.user.id)
+        slug.toLowerCase(), Number(session.user.id)
       );
-
       if (existingSlug) {
         return NextResponse.json(
           { error: 'This booking URL is already taken. Please choose another.' },
           { status: 409 }
         );
       }
+      newSlug = slug.toLowerCase();
     }
 
-    const updated = await dbGet<{ business_name: string; slug: string | null }>(
-      'UPDATE users SET business_name = ?, slug = ? WHERE id = ? RETURNING business_name, slug',
-      businessName.trim(), slug ? slug.toLowerCase() : null, Number(session.user.id)
+    await dbRun(
+      'UPDATE users SET business_name = ?, slug = ? WHERE id = ?',
+      businessName.trim(), newSlug, Number(session.user.id)
     );
 
     return NextResponse.json({
       message: 'Profile updated successfully.',
-      user: {
-        businessName: updated?.business_name,
-        slug: updated?.slug,
-      },
+      user: { businessName: businessName.trim(), slug: newSlug },
     });
   } catch (error) {
     console.error('Update profile error:', error);

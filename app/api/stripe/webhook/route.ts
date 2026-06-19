@@ -30,8 +30,11 @@ export async function POST(request: NextRequest) {
           const subscriptionId = session.subscription as string;
           const subscription = await stripe.subscriptions.retrieve(subscriptionId);
           await dbRun(
-            `UPDATE users SET stripe_subscription_id = ?, subscription_status = ? WHERE id = ?`,
-            subscriptionId, subscription.status, Number(session.metadata.userId)
+            `UPDATE users SET stripe_subscription_id = ?, subscription_status = ?, trial_end = ? WHERE id = ?`,
+            subscriptionId,
+            subscription.status,
+            subscription.trial_end,
+            Number(session.metadata.userId)
           );
         }
         break;
@@ -42,13 +45,13 @@ export async function POST(request: NextRequest) {
         const userId = subscription.metadata?.userId;
         if (userId) {
           await dbRun(
-            `UPDATE users SET subscription_status = ? WHERE id = ?`,
-            subscription.status, Number(userId)
+            `UPDATE users SET subscription_status = ?, trial_end = ? WHERE id = ?`,
+            subscription.status, subscription.trial_end, Number(userId)
           );
         } else {
           await dbRun(
-            `UPDATE users SET subscription_status = ? WHERE stripe_subscription_id = ?`,
-            subscription.status, subscription.id
+            `UPDATE users SET subscription_status = ?, trial_end = ? WHERE stripe_subscription_id = ?`,
+            subscription.status, subscription.trial_end, subscription.id
           );
         }
         break;
@@ -66,6 +69,17 @@ export async function POST(request: NextRequest) {
           await dbRun(
             `UPDATE users SET subscription_status = 'canceled', stripe_subscription_id = NULL WHERE stripe_subscription_id = ?`,
             subscription.id
+          );
+        }
+        break;
+      }
+
+      case 'invoice.paid': {
+        const invoice = event.data.object as Stripe.Invoice;
+        if (invoice.subscription) {
+          await dbRun(
+            `UPDATE users SET subscription_status = 'active' WHERE stripe_subscription_id = ?`,
+            invoice.subscription as string
           );
         }
         break;

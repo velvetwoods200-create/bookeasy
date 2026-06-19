@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     }
 
     const business = await dbGet<{ id: number; name: string; email: string; business_name: string | null; subscription_status: string; trial_end: number | null }>(
-      'SELECT * FROM users WHERE id = ?',
+      'SELECT id, name, email, business_name, subscription_status, trial_end FROM users WHERE id = ?',
       Number(businessId)
     );
     if (!business) {
@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
       bookingId,
     };
 
-    Promise.all([
+    void Promise.all([
       sendBookingConfirmationToCustomer(emailData).catch(console.error),
       sendBookingNotificationToBusiness(emailData).catch(console.error),
     ]);

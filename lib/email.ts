@@ -38,7 +38,7 @@ export async function sendBookingConfirmationToCustomer(data: BookingEmailData):
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001';
 
   const { error } = await resend.emails.send({
-    from: 'Simple-G <onboarding@resend.dev>',
+    from: process.env.RESEND_FROM_EMAIL || 'Simple-G <onboarding@resend.dev>',
     to: data.customerEmail,
     subject: `Booking Confirmed — ${data.serviceName} at ${data.businessName}`,
     html: `
@@ -76,7 +76,7 @@ export async function sendBookingNotificationToBusiness(data: BookingEmailData):
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001';
 
   const { error } = await resend.emails.send({
-    from: 'Simple-G <onboarding@resend.dev>',
+    from: process.env.RESEND_FROM_EMAIL || 'Simple-G <onboarding@resend.dev>',
     to: data.businessEmail,
     subject: `New Booking: ${data.customerName} — ${data.serviceName}`,
     html: `
@@ -123,7 +123,7 @@ interface CancellationEmailData {
 
 export async function sendCancellationEmail(data: CancellationEmailData): Promise<void> {
   const { error } = await resend.emails.send({
-    from: 'Simple-G <onboarding@resend.dev>',
+    from: process.env.RESEND_FROM_EMAIL || 'Simple-G <onboarding@resend.dev>',
     to: data.customerEmail,
     subject: `Booking Cancelled — ${data.serviceName} at ${data.businessName}`,
     html: `
