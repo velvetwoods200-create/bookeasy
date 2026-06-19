@@ -1,4 +1,4 @@
-import { DatabaseSync, StatementSync } from 'node:sqlite';
+import { DatabaseSync, StatementSync, SQLInputValue } from 'node:sqlite';
 import path from 'path';
 import fs from 'fs';
 
@@ -21,15 +21,15 @@ export function getDb(): DatabaseSync {
   return db;
 }
 
-export function dbGet<T>(sql: string, ...params: unknown[]): T | undefined {
+export function dbGet<T>(sql: string, ...params: SQLInputValue[]): T | undefined {
   return getDb().prepare(sql).get(...params) as unknown as T | undefined;
 }
 
-export function dbAll<T>(sql: string, ...params: unknown[]): T[] {
+export function dbAll<T>(sql: string, ...params: SQLInputValue[]): T[] {
   return getDb().prepare(sql).all(...params) as unknown as T[];
 }
 
-export function dbRun(sql: string, ...params: unknown[]) {
+export function dbRun(sql: string, ...params: SQLInputValue[]) {
   return getDb().prepare(sql).run(...params);
 }
 
