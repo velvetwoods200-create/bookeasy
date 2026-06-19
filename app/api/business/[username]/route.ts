@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb, DbUser, DbWorkingHours } from '@/lib/database';
+import { dbGet, dbAll, DbUser, DbWorkingHours } from '@/lib/database';
 import { isSubscriptionActive } from '@/lib/stripe';
 
 export async function GET(
@@ -7,11 +7,7 @@ export async function GET(
   { params }: { params: { username: string } }
 ) {
   try {
-    const db = getDb();
-
-    const user = db
-      .prepare('SELECT * FROM users WHERE slug = ?')
-      .get(params.username.toLowerCase()) as DbUser | undefined;
+    const user = dbGet<DbUser>('SELECT * FROM users WHERE slug = ?', params.username.toLowerCase());
 
     if (!user) {
       return NextResponse.json({ error: 'Business not found.' }, { status: 404 });
@@ -19,13 +15,12 @@ export async function GET(
 
     const active = isSubscriptionActive(user.subscription_status, user.trial_end);
 
-    const services = db
-      .prepare('SELECT * FROM services WHERE user_id = ? ORDER BY created_at ASC')
-      .all(user.id);
+    const services = dbAll('SELECT * FROM services WHERE user_id = ? ORDER BY created_at ASC', user.id);
 
-    const workingHours = db
-      .prepare('SELECT * FROM working_hours WHERE user_id = ? ORDER BY day_of_week ASC')
-      .all(user.id) as DbWorkingHours[];
+    const workingHours = dbAll<DbWorkingHours>(
+      'SELECT * FROM working_hours WHERE user_id = ? ORDER BY day_of_week ASC',
+      user.id
+    );
 
     return NextResponse.json({
       business: {

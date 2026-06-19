@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb, DbWorkingHours, DbBooking, DbService } from '@/lib/database';
+import { dbGet, dbAll, DbWorkingHours, DbBooking, DbService } from '@/lib/database';
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,11 +15,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const db = getDb();
-
-    const service = db
-      .prepare('SELECT * FROM services WHERE id = ? AND user_id = ?')
-      .get(Number(serviceId), Number(businessId)) as DbService | undefined;
+    const service = dbGet<DbService>(
+      'SELECT * FROM services WHERE id = ? AND user_id = ?',
+      Number(serviceId),
+      Number(businessId)
+    );
 
     if (!service) {
       return NextResponse.json({ error: 'Service not found.' }, { status: 404 });
@@ -29,23 +29,22 @@ export async function GET(request: NextRequest) {
     const dateObj = new Date(year, month - 1, day);
     const dayOfWeek = dateObj.getDay();
 
-    const workingHour = db
-      .prepare('SELECT * FROM working_hours WHERE user_id = ? AND day_of_week = ?')
-      .get(Number(businessId), dayOfWeek) as DbWorkingHours | undefined;
+    const workingHour = dbGet<DbWorkingHours>(
+      'SELECT * FROM working_hours WHERE user_id = ? AND day_of_week = ?',
+      Number(businessId),
+      dayOfWeek
+    );
 
     if (!workingHour || !workingHour.is_active) {
       return NextResponse.json({ slots: [] });
     }
 
-    // Get all confirmed bookings for this date
-    const existingBookings = db
-      .prepare(`
-        SELECT start_time, end_time FROM bookings
-        WHERE user_id = ? AND date = ? AND status = 'confirmed'
-      `)
-      .all(Number(businessId), date) as Pick<DbBooking, 'start_time' | 'end_time'>[];
+    const existingBookings = dbAll<Pick<DbBooking, 'start_time' | 'end_time'>>(
+      `SELECT start_time, end_time FROM bookings WHERE user_id = ? AND date = ? AND status = 'confirmed'`,
+      Number(businessId),
+      date
+    );
 
-    // Generate 30-minute slots
     const [startHour, startMin] = workingHour.start_time.split(':').map(Number);
     const [endHour, endMin] = workingHour.end_time.split(':').map(Number);
     const startMinutes = startHour * 60 + startMin;
@@ -61,7 +60,6 @@ export async function GET(request: NextRequest) {
       const slotEndMin = slotEndMinutes % 60;
       const slotEndTime = `${String(slotEndHour).padStart(2, '0')}:${String(slotEndMin).padStart(2, '0')}`;
 
-      // Check if this slot conflicts with any existing booking
       const hasConflict = existingBookings.some((booking) => {
         return slotTime < booking.end_time && slotEndTime > booking.start_time;
       });
@@ -71,13 +69,12 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Filter out past slots if the date is today
     const now = new Date();
     const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     let availableSlots = slots;
 
     if (date === todayStr) {
-      const currentMinutes = now.getHours() * 60 + now.getMinutes() + 30; // 30-min buffer
+      const currentMinutes = now.getHours() * 60 + now.getMinutes() + 30;
       availableSlots = slots.filter((slot) => {
         const [h, m] = slot.split(':').map(Number);
         return h * 60 + m >= currentMinutes;

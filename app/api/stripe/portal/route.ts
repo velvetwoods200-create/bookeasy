@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { getDb, DbUser } from '@/lib/database';
+import { dbGet, DbUser } from '@/lib/database';
 import { createPortalSession } from '@/lib/stripe';
 
 export async function POST(_request: NextRequest) {
@@ -9,10 +9,7 @@ export async function POST(_request: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const db = getDb();
-    const user = db
-      .prepare('SELECT * FROM users WHERE id = ?')
-      .get(Number(session.user.id)) as DbUser | undefined;
+    const user = dbGet<DbUser>('SELECT * FROM users WHERE id = ?', Number(session.user.id));
 
     if (!user || !user.stripe_customer_id) {
       return NextResponse.json(

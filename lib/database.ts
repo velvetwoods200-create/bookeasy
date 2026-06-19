@@ -21,6 +21,18 @@ export function getDb(): DatabaseSync {
   return db;
 }
 
+export function dbGet<T>(sql: string, ...params: unknown[]): T | undefined {
+  return getDb().prepare(sql).get(...params) as unknown as T | undefined;
+}
+
+export function dbAll<T>(sql: string, ...params: unknown[]): T[] {
+  return getDb().prepare(sql).all(...params) as unknown as T[];
+}
+
+export function dbRun(sql: string, ...params: unknown[]) {
+  return getDb().prepare(sql).run(...params);
+}
+
 function initializeSchema(database: DatabaseSync) {
   database.exec(`
     CREATE TABLE IF NOT EXISTS users (
