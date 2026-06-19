@@ -9,7 +9,7 @@ export async function POST(_request: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const user = dbGet<DbUser>('SELECT * FROM users WHERE id = ?', Number(session.user.id));
+    const user = await dbGet<DbUser>('SELECT * FROM users WHERE id = ?', Number(session.user.id));
 
     if (!user || !user.stripe_customer_id) {
       return NextResponse.json(

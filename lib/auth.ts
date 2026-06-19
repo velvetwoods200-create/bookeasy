@@ -1,7 +1,7 @@
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
-import { dbGet, DbUser } from './database';
+import { dbGet, initDb, DbUser } from './database';
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -15,7 +15,8 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.email || !credentials?.password) return null;
 
         try {
-          const user = dbGet<DbUser>('SELECT * FROM users WHERE email = ?', credentials.email);
+          await initDb();
+          const user = await dbGet<DbUser>('SELECT * FROM users WHERE email = ?', credentials.email);
 
           if (!user) return null;
 
@@ -47,9 +48,8 @@ export const authOptions: NextAuthOptions = {
         token.trialEnd = user.trialEnd;
       }
       if (trigger === 'update') {
-        // Refresh user data from DB on session update
         try {
-          const freshUser = dbGet<DbUser>('SELECT * FROM users WHERE id = ?', Number(token.id));
+          const freshUser = await dbGet<DbUser>('SELECT * FROM users WHERE id = ?', Number(token.id));
           if (freshUser) {
             token.slug = freshUser.slug;
             token.businessName = freshUser.business_name;

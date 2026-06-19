@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { getDb } from '@/lib/database';
+import { dbGet, dbRun } from '@/lib/database';
 
 export async function PUT(request: NextRequest) {
   try {
@@ -14,8 +14,6 @@ export async function PUT(request: NextRequest) {
     if (!businessName) {
       return NextResponse.json({ error: 'Business name is required.' }, { status: 400 });
     }
-
-    const db = getDb();
 
     if (slug) {
       const slugRegex = /^[a-z0-9-]+$/;
@@ -33,9 +31,10 @@ export async function PUT(request: NextRequest) {
         );
       }
 
-      const existingSlug = db
-        .prepare('SELECT id FROM users WHERE slug = ? AND id != ?')
-        .get(slug, Number(session.user.id));
+      const existingSlug = await dbGet(
+        'SELECT id FROM users WHERE slug = ? AND id != ?',
+        slug, Number(session.user.id)
+      );
 
       if (existingSlug) {
         return NextResponse.json(
@@ -45,19 +44,16 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    db.prepare('UPDATE users SET business_name = ?, slug = ? WHERE id = ?').run(
-      businessName.trim(),
-      slug ? slug.toLowerCase() : null,
-      Number(session.user.id)
+    const updated = await dbGet<{ business_name: string; slug: string | null }>(
+      'UPDATE users SET business_name = ?, slug = ? WHERE id = ? RETURNING business_name, slug',
+      businessName.trim(), slug ? slug.toLowerCase() : null, Number(session.user.id)
     );
-
-    const updated = db.prepare('SELECT * FROM users WHERE id = ?').get(Number(session.user.id)) as any;
 
     return NextResponse.json({
       message: 'Profile updated successfully.',
       user: {
-        businessName: updated.business_name,
-        slug: updated.slug,
+        businessName: updated?.business_name,
+        slug: updated?.slug,
       },
     });
   } catch (error) {

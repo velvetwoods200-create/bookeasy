@@ -12,10 +12,9 @@ export async function POST(
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const booking = dbGet<DbBooking>(
+    const booking = await dbGet<DbBooking>(
       'SELECT * FROM bookings WHERE id = ? AND user_id = ?',
-      Number(params.id),
-      Number(session.user.id)
+      Number(params.id), Number(session.user.id)
     );
 
     if (!booking) {
@@ -26,14 +25,13 @@ export async function POST(
       return NextResponse.json({ error: 'Booking is already cancelled.' }, { status: 400 });
     }
 
-    dbRun('UPDATE bookings SET status = ? WHERE id = ?', 'cancelled', booking.id);
+    await dbRun('UPDATE bookings SET status = ? WHERE id = ?', 'cancelled', booking.id);
 
-    const business = dbGet<{ business_name: string | null; name: string }>(
+    const business = await dbGet<{ business_name: string | null; name: string }>(
       'SELECT business_name, name FROM users WHERE id = ?',
       Number(session.user.id)
     );
 
-    // Send cancellation email (non-blocking)
     sendCancellationEmail({
       customerName: booking.customer_name,
       customerEmail: booking.customer_email,

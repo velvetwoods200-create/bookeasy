@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { dbGet, dbAll, dbRun, DbService, DbWorkingHours } from '@/lib/database';
+import { dbGet, dbAll, DbService, DbWorkingHours } from '@/lib/database';
 import {
   sendBookingConfirmationToCustomer,
   sendBookingNotificationToBusiness,
@@ -12,7 +12,7 @@ export async function GET() {
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const bookings = dbAll(
+    const bookings = await dbAll(
       'SELECT * FROM bookings WHERE user_id = ? ORDER BY date DESC, start_time DESC',
       Number(session.user.id)
     );
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Please provide a valid email address.' }, { status: 400 });
     }
 
-    const business = dbGet<{ id: number; name: string; email: string; business_name: string | null; subscription_status: string; trial_end: number | null }>(
+    const business = await dbGet<{ id: number; name: string; email: string; business_name: string | null; subscription_status: string; trial_end: number | null }>(
       'SELECT * FROM users WHERE id = ?',
       Number(businessId)
     );
@@ -55,10 +55,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'This booking page is currently unavailable.' }, { status: 403 });
     }
 
-    const service = dbGet<DbService>(
+    const service = await dbGet<DbService>(
       'SELECT * FROM services WHERE id = ? AND user_id = ?',
-      Number(serviceId),
-      Number(businessId)
+      Number(serviceId), Number(businessId)
     );
     if (!service) {
       return NextResponse.json({ error: 'Service not found.' }, { status: 404 });
@@ -80,10 +79,9 @@ export async function POST(request: NextRequest) {
     }
 
     const dayOfWeek = bookingDate.getDay();
-    const workingHour = dbGet<DbWorkingHours>(
+    const workingHour = await dbGet<DbWorkingHours>(
       'SELECT * FROM working_hours WHERE user_id = ? AND day_of_week = ?',
-      Number(businessId),
-      dayOfWeek
+      Number(businessId), dayOfWeek
     );
 
     if (!workingHour || !workingHour.is_active) {
@@ -99,34 +97,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Selected time is outside of business hours.' }, { status: 400 });
     }
 
-    const conflicts = dbAll(
+    const conflicts = await dbAll(
       `SELECT id FROM bookings WHERE user_id = ? AND date = ? AND status = 'confirmed' AND start_time < ? AND end_time > ?`,
-      Number(businessId),
-      date,
-      endTime,
-      startTime
+      Number(businessId), date, endTime, startTime
     );
 
     if (conflicts.length > 0) {
       return NextResponse.json({ error: 'This time slot is no longer available. Please choose another.' }, { status: 409 });
     }
 
-    const result = dbRun(
-      `INSERT INTO bookings (user_id, service_id, service_name, service_duration, service_price, customer_name, customer_email, customer_phone, date, start_time, end_time, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'confirmed')`,
-      Number(businessId),
-      service.id,
-      service.name,
-      service.duration,
-      service.price,
-      customerName.trim(),
-      customerEmail.toLowerCase().trim(),
-      customerPhone?.trim() || null,
-      date,
-      startTime,
-      endTime
+    const booking = await dbGet<{ id: number }>(
+      `INSERT INTO bookings (user_id, service_id, service_name, service_duration, service_price, customer_name, customer_email, customer_phone, date, start_time, end_time, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'confirmed') RETURNING id`,
+      Number(businessId), service.id, service.name, service.duration, service.price,
+      customerName.trim(), customerEmail.toLowerCase().trim(), customerPhone?.trim() || null,
+      date, startTime, endTime
     );
 
-    const bookingId = result.lastInsertRowid as number;
+    const bookingId = booking!.id;
 
     const emailData = {
       customerName: customerName.trim(),

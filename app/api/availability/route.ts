@@ -15,10 +15,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const service = dbGet<DbService>(
+    const service = await dbGet<DbService>(
       'SELECT * FROM services WHERE id = ? AND user_id = ?',
-      Number(serviceId),
-      Number(businessId)
+      Number(serviceId), Number(businessId)
     );
 
     if (!service) {
@@ -29,20 +28,18 @@ export async function GET(request: NextRequest) {
     const dateObj = new Date(year, month - 1, day);
     const dayOfWeek = dateObj.getDay();
 
-    const workingHour = dbGet<DbWorkingHours>(
+    const workingHour = await dbGet<DbWorkingHours>(
       'SELECT * FROM working_hours WHERE user_id = ? AND day_of_week = ?',
-      Number(businessId),
-      dayOfWeek
+      Number(businessId), dayOfWeek
     );
 
     if (!workingHour || !workingHour.is_active) {
       return NextResponse.json({ slots: [] });
     }
 
-    const existingBookings = dbAll<Pick<DbBooking, 'start_time' | 'end_time'>>(
+    const existingBookings = await dbAll<Pick<DbBooking, 'start_time' | 'end_time'>>(
       `SELECT start_time, end_time FROM bookings WHERE user_id = ? AND date = ? AND status = 'confirmed'`,
-      Number(businessId),
-      date
+      Number(businessId), date
     );
 
     const [startHour, startMin] = workingHour.start_time.split(':').map(Number);

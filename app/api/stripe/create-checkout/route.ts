@@ -9,7 +9,7 @@ export async function POST(_request: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const user = dbGet<DbUser>('SELECT * FROM users WHERE id = ?', Number(session.user.id));
+    const user = await dbGet<DbUser>('SELECT * FROM users WHERE id = ?', Number(session.user.id));
 
     if (!user) return NextResponse.json({ error: 'User not found.' }, { status: 404 });
 
@@ -17,7 +17,7 @@ export async function POST(_request: NextRequest) {
 
     if (!stripeCustomerId) {
       stripeCustomerId = await createStripeCustomer(user.name, user.email);
-      dbRun('UPDATE users SET stripe_customer_id = ? WHERE id = ?', stripeCustomerId, user.id);
+      await dbRun('UPDATE users SET stripe_customer_id = ? WHERE id = ?', stripeCustomerId, user.id);
     }
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';

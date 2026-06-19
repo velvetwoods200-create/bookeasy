@@ -1,21 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb, DbBooking } from '@/lib/database';
+import { dbGet, DbBooking } from '@/lib/database';
 
-// GET /api/bookings/[id] — public, for the confirmation page
 export async function GET(
   _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const db = getDb();
-    const booking = db
-      .prepare(`
-        SELECT b.*, u.business_name, u.name as owner_name
-        FROM bookings b
-        JOIN users u ON b.user_id = u.id
-        WHERE b.id = ?
-      `)
-      .get(Number(params.id)) as (DbBooking & { business_name: string | null; owner_name: string }) | undefined;
+    const booking = await dbGet<DbBooking & { business_name: string | null; owner_name: string }>(
+      `SELECT b.*, u.business_name, u.name as owner_name
+       FROM bookings b
+       JOIN users u ON b.user_id = u.id
+       WHERE b.id = ?`,
+      Number(params.id)
+    );
 
     if (!booking) {
       return NextResponse.json({ error: 'Booking not found.' }, { status: 404 });

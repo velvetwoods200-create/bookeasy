@@ -1,42 +1,24 @@
-import { DatabaseSync, StatementSync, SQLInputValue } from 'node:sqlite';
-import path from 'path';
-import fs from 'fs';
+import { Pool } from '@neondatabase/serverless';
 
-const DB_PATH = process.env.DATABASE_URL || path.join(process.cwd(), 'data', 'bookeasy.db');
+let pool: Pool | null = null;
 
-const dataDir = path.dirname(DB_PATH);
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
-}
-
-let db: DatabaseSync | null = null;
-
-export function getDb(): DatabaseSync {
-  if (!db) {
-    db = new DatabaseSync(DB_PATH);
-    db.exec('PRAGMA journal_mode = WAL');
-    db.exec('PRAGMA foreign_keys = ON');
-    initializeSchema(db);
+function getPool(): Pool {
+  if (!pool) {
+    pool = new Pool({ connectionString: process.env.DATABASE_URL! });
   }
-  return db;
+  return pool;
 }
 
-export function dbGet<T>(sql: string, ...params: SQLInputValue[]): T | undefined {
-  return getDb().prepare(sql).get(...params) as unknown as T | undefined;
+function toPostgres(query: string): string {
+  let i = 0;
+  return query.replace(/\?/g, () => `$${++i}`);
 }
 
-export function dbAll<T>(sql: string, ...params: SQLInputValue[]): T[] {
-  return getDb().prepare(sql).all(...params) as unknown as T[];
-}
-
-export function dbRun(sql: string, ...params: SQLInputValue[]) {
-  return getDb().prepare(sql).run(...params);
-}
-
-function initializeSchema(database: DatabaseSync) {
-  database.exec(`
+export async function initDb(): Promise<void> {
+  const p = getPool();
+  await p.query(`
     CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       name TEXT NOT NULL,
       email TEXT UNIQUE NOT NULL,
       password TEXT NOT NULL,
@@ -45,23 +27,23 @@ function initializeSchema(database: DatabaseSync) {
       stripe_customer_id TEXT,
       stripe_subscription_id TEXT,
       subscription_status TEXT NOT NULL DEFAULT 'trialing',
-      trial_end INTEGER,
-      created_at INTEGER NOT NULL DEFAULT (unixepoch())
+      trial_end BIGINT,
+      created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
     )
   `);
-  database.exec(`
+  await p.query(`
     CREATE TABLE IF NOT EXISTS services (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       name TEXT NOT NULL,
       duration INTEGER NOT NULL DEFAULT 30,
-      price REAL NOT NULL DEFAULT 0,
-      created_at INTEGER NOT NULL DEFAULT (unixepoch())
+      price NUMERIC NOT NULL DEFAULT 0,
+      created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
     )
   `);
-  database.exec(`
+  await p.query(`
     CREATE TABLE IF NOT EXISTS working_hours (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       day_of_week INTEGER NOT NULL,
       start_time TEXT NOT NULL DEFAULT '09:00',
@@ -70,14 +52,14 @@ function initializeSchema(database: DatabaseSync) {
       UNIQUE(user_id, day_of_week)
     )
   `);
-  database.exec(`
+  await p.query(`
     CREATE TABLE IF NOT EXISTS bookings (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       service_id INTEGER REFERENCES services(id) ON DELETE SET NULL,
       service_name TEXT NOT NULL,
       service_duration INTEGER NOT NULL,
-      service_price REAL NOT NULL DEFAULT 0,
+      service_price NUMERIC NOT NULL DEFAULT 0,
       customer_name TEXT NOT NULL,
       customer_email TEXT NOT NULL,
       customer_phone TEXT,
@@ -85,9 +67,23 @@ function initializeSchema(database: DatabaseSync) {
       start_time TEXT NOT NULL,
       end_time TEXT NOT NULL,
       status TEXT NOT NULL DEFAULT 'confirmed',
-      created_at INTEGER NOT NULL DEFAULT (unixepoch())
+      created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
     )
   `);
+}
+
+export async function dbGet<T>(query: string, ...params: unknown[]): Promise<T | undefined> {
+  const result = await getPool().query(toPostgres(query), params);
+  return result.rows[0] as T | undefined;
+}
+
+export async function dbAll<T>(query: string, ...params: unknown[]): Promise<T[]> {
+  const result = await getPool().query(toPostgres(query), params);
+  return result.rows as T[];
+}
+
+export async function dbRun(query: string, ...params: unknown[]): Promise<void> {
+  await getPool().query(toPostgres(query), params);
 }
 
 export interface DbUser {
