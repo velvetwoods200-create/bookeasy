@@ -37,7 +37,6 @@ function formatDate(dateStr: string): string {
 }
 
 function isUpcoming(booking: Booking): boolean {
-  const now = new Date();
   const [y, m, d] = booking.date.split('-').map(Number);
   const bookingDate = new Date(y, m - 1, d);
   bookingDate.setHours(0, 0, 0, 0);
@@ -47,20 +46,27 @@ function isUpcoming(booking: Booking): boolean {
 }
 
 function DashboardContent() {
-  const { data: session } = useSession();
+  const { data: session, update: updateSession } = useSession();
   const searchParams = useSearchParams();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [cancelModal, setCancelModal] = useState<Booking | null>(null);
   const [cancelling, setCancelling] = useState(false);
-  const [successBanner, setSuccessBanner] = useState('');
+  const [banner, setBanner] = useState<{ type: 'success' | 'error' | 'warning'; text: string } | null>(null);
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
+  const [subscribing, setSubscribing] = useState(false);
 
+  // Handle Stripe return
   useEffect(() => {
-    if (searchParams.get('subscription') === 'success') {
-      setSuccessBanner('Subscription activated! Your booking page is now live.');
+    const sub = searchParams.get('subscription');
+    if (sub === 'success') {
+      setBanner({ type: 'success', text: 'Subscription activated! Your booking page is now live.' });
+      // Refresh session so status updates immediately
+      updateSession();
+    } else if (sub === 'cancelled') {
+      setBanner({ type: 'warning', text: 'Payment cancelled — you have not been charged.' });
     }
-  }, [searchParams]);
+  }, [searchParams, updateSession]);
 
   useEffect(() => {
     fetchBookings();
@@ -94,39 +100,65 @@ function DashboardContent() {
     }
   }
 
+  async function handleSubscribe() {
+    setSubscribing(true);
+    setBanner(null);
+    try {
+      const res = await fetch('/api/stripe/create-checkout', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        setBanner({ type: 'error', text: data.error || 'Failed to start checkout. Please try again.' });
+        return;
+      }
+      window.location.href = data.url;
+    } catch {
+      setBanner({ type: 'error', text: 'Something went wrong. Please try again.' });
+    } finally {
+      setSubscribing(false);
+    }
+  }
+
+  async function handleManageBilling() {
+    try {
+      const res = await fetch('/api/stripe/portal', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        setBanner({ type: 'error', text: data.error || 'Failed to open billing portal.' });
+        return;
+      }
+      window.location.href = data.url;
+    } catch {
+      setBanner({ type: 'error', text: 'Something went wrong. Please try again.' });
+    }
+  }
+
+  const subStatus = session?.user?.subscriptionStatus;
+  const trialEnd = session?.user?.trialEnd ? Number(session.user.trialEnd) : null;
+  const now = Math.floor(Date.now() / 1000);
+
+  const isActive = subStatus === 'active';
+  const isTrialing = subStatus === 'trialing' && trialEnd !== null && now < trialEnd;
+  const trialDaysLeft = isTrialing && trialEnd ? Math.max(0, Math.ceil((trialEnd - now) / 86400)) : 0;
+  const isExpired = !isActive && !isTrialing;
+
   const upcomingBookings = bookings.filter(isUpcoming);
   const pastBookings = bookings.filter((b) => !isUpcoming(b));
   const displayBookings = activeTab === 'upcoming' ? upcomingBookings : pastBookings;
 
-  const isActive =
-    session?.user?.subscriptionStatus === 'active' ||
-    (session?.user?.subscriptionStatus === 'trialing' &&
-      session?.user?.trialEnd &&
-      Date.now() / 1000 < session.user.trialEnd);
-
-  const trialDaysLeft = session?.user?.trialEnd
-    ? Math.max(0, Math.ceil((session.user.trialEnd - Date.now() / 1000) / 86400))
-    : null;
-
-  async function handleSubscribe() {
-    const res = await fetch('/api/stripe/create-checkout', { method: 'POST' });
-    const data = await res.json();
-    if (data.url) window.location.href = data.url;
-  }
-
-  async function handleManageBilling() {
-    const res = await fetch('/api/stripe/portal', { method: 'POST' });
-    const data = await res.json();
-    if (data.url) window.location.href = data.url;
-  }
+  const bannerStyles = {
+    success: 'bg-green-50 border-green-200 text-green-700',
+    error: 'bg-red-50 border-red-200 text-red-700',
+    warning: 'bg-amber-50 border-amber-200 text-amber-700',
+  };
 
   return (
     <div className="p-6 lg:p-8 max-w-6xl mx-auto">
-      {/* Success banner */}
-      {successBanner && (
-        <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center justify-between">
-          <span className="text-sm font-medium">{successBanner}</span>
-          <button onClick={() => setSuccessBanner('')} className="text-green-500 hover:text-green-700">
+
+      {/* Banner */}
+      {banner && (
+        <div className={`mb-6 border px-4 py-3 rounded-lg flex items-center justify-between ${bannerStyles[banner.type]}`}>
+          <span className="text-sm font-medium">{banner.text}</span>
+          <button onClick={() => setBanner(null)} className="ml-4 opacity-60 hover:opacity-100">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -142,8 +174,8 @@ function DashboardContent() {
         <p className="text-gray-500 mt-1">Here are your appointments.</p>
       </div>
 
-      {/* Subscription alert */}
-      {session?.user?.subscriptionStatus === 'trialing' && trialDaysLeft !== null && trialDaysLeft <= 7 && (
+      {/* Trial expiring soon (≤7 days) */}
+      {isTrialing && trialDaysLeft <= 7 && (
         <div className="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
             <p className="font-semibold text-amber-800 text-sm">
@@ -153,13 +185,14 @@ function DashboardContent() {
               Subscribe to keep your booking page active after the trial ends.
             </p>
           </div>
-          <Button onClick={handleSubscribe} size="sm" className="flex-shrink-0">
+          <Button onClick={handleSubscribe} size="sm" loading={subscribing} className="flex-shrink-0">
             Subscribe — $9/mo
           </Button>
         </div>
       )}
 
-      {!isActive && session?.user?.subscriptionStatus !== 'trialing' && (
+      {/* Expired / inactive — not trialing and not active */}
+      {isExpired && (
         <div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
             <p className="font-semibold text-red-800 text-sm">⚠️ Your booking page is paused</p>
@@ -167,8 +200,8 @@ function DashboardContent() {
               Customers cannot book until you have an active subscription.
             </p>
           </div>
-          <Button onClick={handleSubscribe} size="sm" className="flex-shrink-0">
-            Subscribe now
+          <Button onClick={handleSubscribe} size="sm" loading={subscribing} className="flex-shrink-0 bg-red-600 hover:bg-red-700">
+            Subscribe now — $9/mo
           </Button>
         </div>
       )}
@@ -177,12 +210,16 @@ function DashboardContent() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
           { label: 'Upcoming', value: upcomingBookings.length, color: 'text-indigo-600' },
-          { label: 'Total bookings', value: bookings.filter(b => b.status === 'confirmed').length + bookings.filter(b => b.status === 'cancelled').length, color: 'text-gray-900' },
+          {
+            label: 'Total bookings',
+            value: bookings.filter(b => b.status === 'confirmed' || b.status === 'cancelled').length,
+            color: 'text-gray-900',
+          },
           { label: 'Cancelled', value: bookings.filter((b) => b.status === 'cancelled').length, color: 'text-red-500' },
           {
             label: 'Status',
-            value: isActive ? 'Active' : 'Inactive',
-            color: isActive ? 'text-green-600' : 'text-red-500',
+            value: isActive ? 'Active' : isTrialing ? `Trial (${trialDaysLeft}d)` : 'Inactive',
+            color: isActive ? 'text-green-600' : isTrialing ? 'text-amber-600' : 'text-red-500',
           },
         ].map((stat) => (
           <Card key={stat.label} padding="sm">
@@ -199,9 +236,7 @@ function DashboardContent() {
             <button
               onClick={() => setActiveTab('upcoming')}
               className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
-                activeTab === 'upcoming'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
+                activeTab === 'upcoming' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
               }`}
             >
               Upcoming ({upcomingBookings.length})
@@ -209,9 +244,7 @@ function DashboardContent() {
             <button
               onClick={() => setActiveTab('past')}
               className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
-                activeTab === 'past'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
+                activeTab === 'past' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
               }`}
             >
               Past & Cancelled ({pastBookings.length})
@@ -219,20 +252,14 @@ function DashboardContent() {
           </div>
 
           <div className="flex gap-2">
-            {session?.user?.subscriptionStatus === 'active' && (
+            {isActive && (
               <Button onClick={handleManageBilling} variant="secondary" size="sm">
                 Manage billing
               </Button>
             )}
             {session?.user?.slug && (
-              <a
-                href={`/${session.user.slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Button variant="secondary" size="sm">
-                  View booking page ↗
-                </Button>
+              <a href={`/${session.user.slug}`} target="_blank" rel="noopener noreferrer">
+                <Button variant="secondary" size="sm">View booking page ↗</Button>
               </a>
             )}
           </div>
@@ -290,13 +317,9 @@ function DashboardContent() {
                       </p>
                     </td>
                     <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          booking.status === 'confirmed'
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-gray-100 text-gray-500'
-                        }`}
-                      >
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        booking.status === 'confirmed' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                      }`}>
                         {booking.status === 'confirmed' ? '● Confirmed' : '✕ Cancelled'}
                       </span>
                     </td>
@@ -321,26 +344,17 @@ function DashboardContent() {
       </Card>
 
       {/* Cancel confirmation modal */}
-      <Modal
-        isOpen={!!cancelModal}
-        onClose={() => setCancelModal(null)}
-        title="Cancel booking?"
-      >
+      <Modal isOpen={!!cancelModal} onClose={() => setCancelModal(null)} title="Cancel booking?">
         {cancelModal && (
           <div>
             <p className="text-gray-600 text-sm mb-4">
-              This will cancel the booking for{' '}
-              <strong>{cancelModal.customer_name}</strong> ({cancelModal.service_name} on{' '}
-              {formatDate(cancelModal.date)} at {formatTime(cancelModal.start_time)}) and send them
-              a cancellation email.
+              This will cancel the booking for <strong>{cancelModal.customer_name}</strong> (
+              {cancelModal.service_name} on {formatDate(cancelModal.date)} at{' '}
+              {formatTime(cancelModal.start_time)}) and send them a cancellation email.
             </p>
             <div className="flex gap-3 justify-end">
-              <Button variant="secondary" onClick={() => setCancelModal(null)}>
-                Keep booking
-              </Button>
-              <Button variant="danger" loading={cancelling} onClick={handleCancel}>
-                Yes, cancel it
-              </Button>
+              <Button variant="secondary" onClick={() => setCancelModal(null)}>Keep booking</Button>
+              <Button variant="danger" loading={cancelling} onClick={handleCancel}>Yes, cancel it</Button>
             </div>
           </div>
         )}
