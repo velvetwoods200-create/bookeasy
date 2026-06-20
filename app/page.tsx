@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
+import LandingCTA from '@/components/LandingCTA';
 
 export default function LandingPage() {
   return (
@@ -24,15 +25,7 @@ export default function LandingPage() {
               you get notified instantly, and no-shows become a thing of the past.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link
-                href="/register"
-                className="inline-flex items-center justify-center bg-white text-indigo-700 font-semibold px-8 py-4 rounded-xl hover:bg-indigo-50 transition-all shadow-lg hover:shadow-xl text-lg"
-              >
-                Start free trial
-                <svg className="ml-2 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </Link>
+              <LandingCTA variant="hero" />
               <Link
                 href="#how-it-works"
                 className="inline-flex items-center justify-center border border-white/30 text-white font-semibold px-8 py-4 rounded-xl hover:bg-white/10 transition-all text-lg"
@@ -137,7 +130,7 @@ export default function LandingPage() {
               {
                 step: '2',
                 title: 'Add your services & hours',
-                desc: 'List what you offer, how long each takes, and when you\'re available.',
+                desc: "List what you offer, how long each takes, and when you're available.",
               },
               {
                 step: '3',
@@ -199,12 +192,7 @@ export default function LandingPage() {
                 ))}
               </ul>
 
-              <Link
-                href="/register"
-                className="block w-full bg-white text-indigo-700 font-semibold py-4 rounded-xl hover:bg-indigo-50 transition-colors text-center text-lg"
-              >
-                Start free trial
-              </Link>
+              <LandingCTA variant="pricing" />
               <p className="text-indigo-200 text-xs mt-3">No credit card required to start</p>
             </div>
           </div>
@@ -220,15 +208,7 @@ export default function LandingPage() {
           <p className="text-xl text-gray-400 mb-10">
             Join thousands of small businesses that use Simple-G to fill their calendars effortlessly.
           </p>
-          <Link
-            href="/register"
-            className="inline-flex items-center bg-indigo-600 text-white font-semibold px-10 py-4 rounded-xl hover:bg-indigo-700 transition-all shadow-lg hover:shadow-xl text-lg"
-          >
-            Get started free — no credit card needed
-            <svg className="ml-2 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-            </svg>
-          </Link>
+          <LandingCTA variant="bottom" />
         </div>
       </section>
 
