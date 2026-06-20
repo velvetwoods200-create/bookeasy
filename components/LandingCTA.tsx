@@ -15,9 +15,17 @@ export default function LandingCTA({ variant = 'hero' }: LandingCTAProps) {
   const loading = status === 'loading';
 
   async function handleUpgrade() {
-    const res = await fetch('/api/stripe/create-checkout', { method: 'POST' });
-    const data = await res.json();
-    if (data.url) router.push(data.url);
+    try {
+      const res = await fetch('/api/stripe/create-checkout', { method: 'POST' });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error || 'Could not start checkout. Please try again.');
+      }
+    } catch {
+      alert('Something went wrong. Please try again.');
+    }
   }
 
   if (loading) {
