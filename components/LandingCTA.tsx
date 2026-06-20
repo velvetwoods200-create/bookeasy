@@ -165,26 +165,26 @@ export default function LandingCTA({ variant = 'hero' }: LandingCTAProps) {
     );
   }
 
-  // Trialing with >7 days left → go to dashboard
+  // Trialing with >7 days left → offer to subscribe early
   if (variant === 'pricing') {
     return (
-      <Link
-        href="/dashboard"
+      <button
+        onClick={handleUpgrade}
         className="block w-full bg-white text-indigo-700 font-semibold py-4 rounded-xl hover:bg-indigo-50 transition-colors text-center text-lg"
       >
-        Go to Dashboard
-      </Link>
+        Subscribe now — $9/mo
+      </button>
     );
   }
   return (
-    <Link
-      href="/dashboard"
+    <button
+      onClick={handleUpgrade}
       className="inline-flex items-center justify-center bg-white text-indigo-700 font-semibold px-8 py-4 rounded-xl hover:bg-indigo-50 transition-all shadow-lg hover:shadow-xl text-lg"
     >
-      Go to Dashboard
+      Subscribe now — $9/mo
       <svg className="ml-2 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
       </svg>
-    </Link>
+    </button>
   );
 }

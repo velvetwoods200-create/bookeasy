@@ -175,6 +175,21 @@ function DashboardContent() {
       </div>
 
       {/* Trial expiring soon (≤7 days) */}
+      {isTrialing && trialDaysLeft > 7 && (
+        <div className="mb-6 bg-indigo-50 border border-indigo-100 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div>
+            <p className="font-semibold text-indigo-800 text-sm">
+              You are on a free trial — {trialDaysLeft} days remaining
+            </p>
+            <p className="text-indigo-600 text-xs mt-0.5">
+              Subscribe now to keep your booking page active after the trial ends.
+            </p>
+          </div>
+          <Button onClick={handleSubscribe} size="sm" loading={subscribing} className="flex-shrink-0">
+            Subscribe — $9/mo
+          </Button>
+        </div>
+      )}
       {isTrialing && trialDaysLeft <= 7 && (
         <div className="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
