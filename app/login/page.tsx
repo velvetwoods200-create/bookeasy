@@ -13,6 +13,7 @@ function LoginForm() {
   const raw = searchParams.get('callbackUrl') || '/dashboard';
   const callbackUrl = raw.startsWith('/') ? raw : '/dashboard';
 
+  const success = searchParams.get('reset') === 'success';
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -66,6 +67,11 @@ function LoginForm() {
 
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
           <form onSubmit={handleSubmit} className="space-y-4">
+            {success && (
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
+                Password reset successfully! Sign in with your new password.
+              </div>
+            )}
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
                 {error}
@@ -88,7 +94,12 @@ function LoginForm() {
             </div>
 
             <div>
-              <label htmlFor="password">Password</label>
+              <div className="flex items-center justify-between">
+                <label htmlFor="password">Password</label>
+                <Link href="/forgot-password" className="text-xs text-indigo-600 hover:text-indigo-700 font-medium">
+                  Forgot password?
+                </Link>
+              </div>
               <input
                 id="password"
                 name="password"

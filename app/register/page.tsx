@@ -15,6 +15,7 @@ export default function RegisterPage() {
     password: '',
     confirmPassword: '',
   });
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -26,6 +27,11 @@ export default function RegisterPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+
+    if (!agreedToTerms) {
+      setError('You must agree to the Terms of Service and Privacy Policy to create an account.');
+      return;
+    }
 
     if (form.password !== form.confirmPassword) {
       setError('Passwords do not match.');
@@ -172,6 +178,26 @@ export default function RegisterPage() {
               />
             </div>
 
+            <div className="flex items-start gap-3 pt-1">
+              <input
+                id="terms"
+                type="checkbox"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                className="mt-0.5 w-4 h-4 text-indigo-600 rounded border-gray-300 flex-shrink-0"
+              />
+              <label htmlFor="terms" className="text-sm text-gray-500 cursor-pointer mb-0">
+                I agree to the{' '}
+                <Link href="/terms" target="_blank" className="text-indigo-600 hover:text-indigo-700 font-medium">
+                  Terms of Service
+                </Link>{' '}
+                and{' '}
+                <Link href="/privacy" target="_blank" className="text-indigo-600 hover:text-indigo-700 font-medium">
+                  Privacy Policy
+                </Link>
+              </label>
+            </div>
+
             <Button type="submit" loading={loading} className="w-full" size="lg">
               Create account
             </Button>
@@ -184,10 +210,6 @@ export default function RegisterPage() {
             </Link>
           </p>
         </div>
-
-        <p className="mt-6 text-center text-xs text-gray-400">
-          By signing up, you agree to our terms of service and privacy policy.
-        </p>
       </div>
     </div>
   );

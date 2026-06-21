@@ -225,6 +225,8 @@ export default function LandingPage() {
           </div>
           <p className="text-gray-500 text-sm">© {new Date().getFullYear()} Simple-G. All rights reserved.</p>
           <div className="flex gap-6 text-sm text-gray-500">
+            <Link href="/terms" className="hover:text-gray-300 transition-colors">Terms</Link>
+            <Link href="/privacy" className="hover:text-gray-300 transition-colors">Privacy</Link>
             <Link href="/login" className="hover:text-gray-300 transition-colors">Log in</Link>
             <Link href="/register" className="hover:text-gray-300 transition-colors">Sign up</Link>
           </div>

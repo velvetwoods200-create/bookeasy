@@ -111,6 +111,36 @@ export async function sendBookingNotificationToBusiness(data: BookingEmailData):
   }
 }
 
+export async function sendPasswordResetEmail(email: string, resetUrl: string): Promise<void> {
+  const { error } = await resend.emails.send({
+    from: process.env.RESEND_FROM_EMAIL || 'Simple-G <onboarding@resend.dev>',
+    to: email,
+    subject: 'Reset your Simple-G password',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f9fafb; padding: 20px;">
+        <div style="background: white; border-radius: 8px; padding: 32px; border: 1px solid #e5e7eb;">
+          <div style="text-align: center; margin-bottom: 24px;">
+            <h1 style="color: #4f46e5; margin: 0; font-size: 28px;">Simple-G</h1>
+          </div>
+          <h2 style="color: #111827; font-size: 22px; margin-bottom: 8px;">Reset your password</h2>
+          <p style="color: #6b7280; margin-top: 0;">We received a request to reset your password. Click the button below to choose a new one.</p>
+          <div style="text-align: center; margin: 32px 0;">
+            <a href="${resetUrl}" style="display: inline-block; background: #4f46e5; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">Reset Password</a>
+          </div>
+          <p style="color: #6b7280; font-size: 14px;">This link expires in <strong>1 hour</strong>. If you didn't request a password reset, you can safely ignore this email.</p>
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
+          <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">Powered by Simple-G</p>
+        </div>
+      </div>
+    `,
+  });
+
+  if (error) {
+    console.error('Resend error (password reset):', error);
+    throw error;
+  }
+}
+
 interface CancellationEmailData {
   customerName: string;
   customerEmail: string;
