@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     await dbRun('DELETE FROM password_resets WHERE user_id = ?', user.id);
     await dbRun('INSERT INTO password_resets (user_id, token, expires_at) VALUES (?, ?, ?)', user.id, token, expiresAt);
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.simple-g.com';
+    const appUrl = (process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://www.simple-g.com').replace(/\/$/, '');
     const resetUrl = `${appUrl}/reset-password/${token}`;
 
     await sendPasswordResetEmail(user.email, resetUrl);
