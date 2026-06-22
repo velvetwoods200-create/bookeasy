@@ -120,7 +120,7 @@ export default function BillingPage() {
               Manage billing & invoices
             </Button>
           )}
-          {!isActive && (
+          {!isActive && !isTrialing && (
             <Button onClick={handleSubscribe} loading={subscribeLoading}>
               Subscribe now — $9/mo
             </Button>

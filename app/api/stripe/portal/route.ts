@@ -18,7 +18,7 @@ export async function POST(_request: NextRequest) {
       );
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const appUrl = (process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://www.simple-g.com').replace(/\/$/, '');
     const portalUrl = await createPortalSession(user.stripe_customer_id, appUrl);
 
     return NextResponse.json({ url: portalUrl });
