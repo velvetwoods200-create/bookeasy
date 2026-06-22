@@ -300,61 +300,105 @@ function DashboardContent() {
             )}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Customer</th>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Service</th>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Date & Time</th>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {displayBookings.map((booking) => (
-                  <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4">
-                      <p className="font-medium text-gray-900">{booking.customer_name}</p>
-                      <p className="text-gray-400 text-xs">{booking.customer_email}</p>
+          <>
+            {/* Mobile cards (below md) */}
+            <div className="md:hidden divide-y divide-gray-100">
+              {displayBookings.map((booking) => (
+                <div key={booking.id} className="p-4 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-semibold text-gray-900">{booking.customer_name}</p>
+                      <p className="text-xs text-gray-400">{booking.customer_email}</p>
                       {booking.customer_phone && (
-                        <p className="text-gray-400 text-xs">{booking.customer_phone}</p>
+                        <p className="text-xs text-gray-400">{booking.customer_phone}</p>
                       )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="font-medium text-gray-900">{booking.service_name}</p>
-                      <p className="text-gray-400 text-xs">{booking.service_duration} min</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="font-medium text-gray-900">{formatDate(booking.date)}</p>
-                      <p className="text-gray-400 text-xs">
-                        {formatTime(booking.start_time)} – {formatTime(booking.end_time)}
-                      </p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        booking.status === 'confirmed' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-                      }`}>
-                        {booking.status === 'confirmed' ? '● Confirmed' : '✕ Cancelled'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      {booking.status === 'confirmed' && isUpcoming(booking) && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setCancelModal(booking)}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                        >
-                          Cancel
-                        </Button>
-                      )}
-                    </td>
+                    </div>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${
+                      booking.status === 'confirmed' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                    }`}>
+                      {booking.status === 'confirmed' ? '● Confirmed' : '✕ Cancelled'}
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-700">
+                    <span className="font-medium">{booking.service_name}</span>
+                    <span className="text-gray-400"> · {booking.service_duration} min</span>
+                  </div>
+                  <div className="text-sm text-gray-700">
+                    {formatDate(booking.date)} · {formatTime(booking.start_time)} – {formatTime(booking.end_time)}
+                  </div>
+                  {booking.status === 'confirmed' && isUpcoming(booking) && (
+                    <div className="pt-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setCancelModal(booking)}
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50 w-full justify-center"
+                      >
+                        Cancel booking
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop table (md+) */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100">
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Customer</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Service</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Date & Time</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3" />
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {displayBookings.map((booking) => (
+                    <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4">
+                        <p className="font-medium text-gray-900">{booking.customer_name}</p>
+                        <p className="text-gray-400 text-xs">{booking.customer_email}</p>
+                        {booking.customer_phone && (
+                          <p className="text-gray-400 text-xs">{booking.customer_phone}</p>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="font-medium text-gray-900">{booking.service_name}</p>
+                        <p className="text-gray-400 text-xs">{booking.service_duration} min</p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="font-medium text-gray-900">{formatDate(booking.date)}</p>
+                        <p className="text-gray-400 text-xs">
+                          {formatTime(booking.start_time)} – {formatTime(booking.end_time)}
+                        </p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          booking.status === 'confirmed' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                        }`}>
+                          {booking.status === 'confirmed' ? '● Confirmed' : '✕ Cancelled'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        {booking.status === 'confirmed' && isUpcoming(booking) && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setCancelModal(booking)}
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                          >
+                            Cancel
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </Card>
 

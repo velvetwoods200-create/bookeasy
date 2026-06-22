@@ -56,14 +56,14 @@ export default function TimeSlotPicker({
   }
 
   return (
-    <div className="grid grid-cols-3 gap-2">
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
       {slots.map((slot) => (
         <button
           key={slot}
           type="button"
           onClick={() => onSlotSelect(slot)}
           className={`
-            py-2 px-3 rounded-lg text-sm font-medium transition-all border
+            py-3 px-3 rounded-lg text-sm font-medium transition-all border min-h-[44px]
             ${selectedSlot === slot
               ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
               : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50'

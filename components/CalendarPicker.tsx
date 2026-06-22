@@ -66,9 +66,9 @@ export default function CalendarPicker({
           type="button"
           onClick={prevMonth}
           disabled={!canGoPrev}
-          className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          className="p-3 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
         >
-          <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-6 h-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
@@ -78,9 +78,9 @@ export default function CalendarPicker({
         <button
           type="button"
           onClick={nextMonth}
-          className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          className="p-3 rounded-lg hover:bg-gray-100 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
         >
-          <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-6 h-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </button>
@@ -123,7 +123,7 @@ export default function CalendarPicker({
               onClick={() => !disabled && onDateSelect(dateStr)}
               disabled={disabled}
               className={`
-                aspect-square flex items-center justify-center rounded-lg text-sm font-medium transition-all
+                aspect-square min-h-[44px] flex items-center justify-center rounded-lg text-sm font-medium transition-all
                 ${isSelected
                   ? 'bg-indigo-600 text-white shadow-md'
                   : disabled

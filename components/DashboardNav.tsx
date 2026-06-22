@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
+import { useState } from 'react';
 
 const navItems = [
   {
@@ -38,43 +39,237 @@ const navItems = [
 export default function DashboardNav() {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  function closeDrawer() {
+    setDrawerOpen(false);
+  }
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 min-h-screen flex flex-col">
-      {/* Logo */}
-      <div className="p-6 border-b border-gray-100">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <>
+      {/* ── DESKTOP SIDEBAR (md+) ── */}
+      <aside className="hidden md:flex w-64 bg-white border-r border-gray-200 min-h-screen flex-col">
+        {/* Logo */}
+        <div className="p-6 border-b border-gray-100">
+          <Link href="/" className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <span className="text-lg font-bold text-gray-900">Simple-G</span>
+          </Link>
+        </div>
+
+        {/* Business info */}
+        <div className="px-4 py-4 border-b border-gray-100">
+          <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Business</p>
+          <p className="text-sm font-semibold text-gray-900 truncate">
+            {session?.user?.businessName || session?.user?.name}
+          </p>
+          {session?.user?.slug && (
+            <Link
+              href={`/${session.user.slug}`}
+              target="_blank"
+              className="text-xs text-indigo-600 hover:text-indigo-700 flex items-center gap-1 mt-1"
+            >
+              simple-g.com/{session.user.slug}
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </Link>
+          )}
+        </div>
+
+        {/* Nav */}
+        <nav className="flex-1 px-3 py-4 space-y-1">
+          {navItems.map((item) => {
+            const isActive =
+              item.href === '/dashboard'
+                ? pathname === '/dashboard'
+                : pathname.startsWith(item.href);
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`
+                  flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all
+                  ${isActive
+                    ? 'bg-indigo-50 text-indigo-700'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  }
+                `}
+              >
+                <span className={isActive ? 'text-indigo-600' : 'text-gray-400'}>{item.icon}</span>
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-gray-100">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+              <span className="text-sm font-semibold text-indigo-700">
+                {session?.user?.name?.[0]?.toUpperCase()}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate">{session?.user?.name}</p>
+              <p className="text-xs text-gray-400 truncate">{session?.user?.email}</p>
+            </div>
+          </div>
+          <button
+            onClick={() => signOut({ callbackUrl: '/' })}
+            className="w-full text-left text-xs text-gray-500 hover:text-gray-700 flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-50 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Sign out
+          </button>
+        </div>
+      </aside>
+
+      {/* ── MOBILE TOP HEADER BAR ── */}
+      <header className="md:hidden fixed top-0 left-0 right-0 z-40 bg-white border-b border-gray-200 flex items-center h-14 px-4">
+        <button
+          onClick={() => setDrawerOpen(true)}
+          className="p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors"
+          aria-label="Open menu"
+        >
+          <svg className="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <Link href="/" className="flex items-center gap-2 ml-3">
+          <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center">
+            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
-          <span className="text-lg font-bold text-gray-900">Simple-G</span>
+          <span className="text-base font-bold text-gray-900">Simple-G</span>
         </Link>
-      </div>
+      </header>
 
-      {/* Business info */}
-      <div className="px-4 py-4 border-b border-gray-100">
-        <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Business</p>
-        <p className="text-sm font-semibold text-gray-900 truncate">
-          {session?.user?.businessName || session?.user?.name}
-        </p>
-        {session?.user?.slug && (
-          <Link
-            href={`/${session.user.slug}`}
-            target="_blank"
-            className="text-xs text-indigo-600 hover:text-indigo-700 flex items-center gap-1 mt-1"
-          >
-            simple-g.com/{session.user.slug}
-            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-            </svg>
-          </Link>
-        )}
-      </div>
+      {/* ── MOBILE DRAWER OVERLAY ── */}
+      {drawerOpen && (
+        <div
+          className="md:hidden fixed inset-0 z-50 flex"
+          role="dialog"
+          aria-modal="true"
+        >
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={closeDrawer}
+          />
 
-      {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
+          {/* Drawer panel */}
+          <div className="relative w-72 max-w-[85vw] bg-white flex flex-col h-full shadow-xl">
+            {/* Drawer header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <Link href="/" onClick={closeDrawer} className="flex items-center gap-2">
+                <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center">
+                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <span className="text-base font-bold text-gray-900">Simple-G</span>
+              </Link>
+              <button
+                onClick={closeDrawer}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                aria-label="Close menu"
+              >
+                <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Business info */}
+            {session?.user && (
+              <div className="px-5 py-3 border-b border-gray-100">
+                <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Business</p>
+                <p className="text-sm font-semibold text-gray-900 truncate">
+                  {session.user.businessName || session.user.name}
+                </p>
+                {session.user.slug && (
+                  <Link
+                    href={`/${session.user.slug}`}
+                    target="_blank"
+                    onClick={closeDrawer}
+                    className="text-xs text-indigo-600 flex items-center gap-1 mt-1"
+                  >
+                    simple-g.com/{session.user.slug}
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </Link>
+                )}
+              </div>
+            )}
+
+            {/* Nav links */}
+            <nav className="flex-1 px-3 py-4 space-y-1">
+              {navItems.map((item) => {
+                const isActive =
+                  item.href === '/dashboard'
+                    ? pathname === '/dashboard'
+                    : pathname.startsWith(item.href);
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={closeDrawer}
+                    className={`
+                      flex items-center gap-3 px-4 py-3.5 rounded-lg text-sm font-medium transition-all
+                      ${isActive
+                        ? 'bg-indigo-50 text-indigo-700'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      }
+                    `}
+                  >
+                    <span className={isActive ? 'text-indigo-600' : 'text-gray-400'}>{item.icon}</span>
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            {/* Sign out */}
+            <div className="p-4 border-t border-gray-100">
+              <div className="flex items-center gap-3 mb-4 px-1">
+                <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-sm font-semibold text-indigo-700">
+                    {session?.user?.name?.[0]?.toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">{session?.user?.name}</p>
+                  <p className="text-xs text-gray-400 truncate">{session?.user?.email}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => { closeDrawer(); signOut({ callbackUrl: '/' }); }}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+              >
+                <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Sign out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MOBILE BOTTOM NAV ── */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 flex">
         {navItems.map((item) => {
           const isActive =
             item.href === '/dashboard'
@@ -86,43 +281,16 @@ export default function DashboardNav() {
               key={item.href}
               href={item.href}
               className={`
-                flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all
-                ${isActive
-                  ? 'bg-indigo-50 text-indigo-700'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }
+                flex-1 flex flex-col items-center justify-center py-2 gap-1 text-xs font-medium transition-colors
+                ${isActive ? 'text-indigo-600' : 'text-gray-400 hover:text-gray-600'}
               `}
             >
-              <span className={isActive ? 'text-indigo-600' : 'text-gray-400'}>{item.icon}</span>
-              {item.label}
+              <span>{item.icon}</span>
+              <span>{item.label}</span>
             </Link>
           );
         })}
       </nav>
-
-      {/* Footer */}
-      <div className="p-4 border-t border-gray-100">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
-            <span className="text-sm font-semibold text-indigo-700">
-              {session?.user?.name?.[0]?.toUpperCase()}
-            </span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">{session?.user?.name}</p>
-            <p className="text-xs text-gray-400 truncate">{session?.user?.email}</p>
-          </div>
-        </div>
-        <button
-          onClick={() => signOut({ callbackUrl: '/' })}
-          className="w-full text-left text-xs text-gray-500 hover:text-gray-700 flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-50 transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
-          Sign out
-        </button>
-      </div>
-    </aside>
+    </>
   );
 }

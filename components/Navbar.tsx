@@ -76,23 +76,23 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-gray-100 bg-white px-4 pb-4 space-y-2">
-          <Link href="/#features" className="block py-2 text-sm text-gray-600">Features</Link>
-          <Link href="/#pricing" className="block py-2 text-sm text-gray-600">Pricing</Link>
+        <div className="md:hidden border-t border-gray-100 bg-white px-4 pb-4 space-y-1">
+          <Link href="/#features" onClick={() => setMobileOpen(false)} className="block py-3 text-sm text-gray-600 font-medium border-b border-gray-50">Features</Link>
+          <Link href="/#pricing" onClick={() => setMobileOpen(false)} className="block py-3 text-sm text-gray-600 font-medium border-b border-gray-50">Pricing</Link>
           {session ? (
             <>
-              <Link href="/dashboard" className="block py-2 text-sm text-gray-600">Dashboard</Link>
+              <Link href="/dashboard" onClick={() => setMobileOpen(false)} className="block py-3 text-sm text-gray-600 font-medium border-b border-gray-50">Dashboard</Link>
               <button
-                onClick={() => signOut({ callbackUrl: '/' })}
-                className="block py-2 text-sm text-gray-600 w-full text-left"
+                onClick={() => { setMobileOpen(false); signOut({ callbackUrl: '/' }); }}
+                className="block w-full text-left py-3 text-sm text-gray-600 font-medium"
               >
                 Sign out
               </button>
             </>
           ) : (
             <>
-              <Link href="/login" className="block py-2 text-sm text-gray-600">Log in</Link>
-              <Link href="/register" className="block py-2 text-sm font-medium text-indigo-600">
+              <Link href="/login" onClick={() => setMobileOpen(false)} className="block py-3 text-sm text-gray-600 font-medium border-b border-gray-50">Log in</Link>
+              <Link href="/register" onClick={() => setMobileOpen(false)} className="block py-3 text-sm font-semibold text-indigo-600">
                 Get started free
               </Link>
             </>

@@ -296,6 +296,7 @@ export default function BookingForm({
               disabled={!canProceedToDetails()}
               onClick={() => setStep('details')}
               size="lg"
+              className="w-full sm:w-auto"
             >
               Continue
               <svg className="ml-2 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -391,6 +392,7 @@ export default function BookingForm({
                 setStep('review');
               }}
               size="lg"
+              className="w-full sm:w-auto"
             >
               Review booking
             </Button>

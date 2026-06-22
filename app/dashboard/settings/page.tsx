@@ -332,26 +332,26 @@ export default function SettingsPage() {
 
         <form onSubmit={saveHours} className="space-y-3">
           {hours.map((h) => (
-            <div key={h.day_of_week} className="flex items-center gap-4 py-2 border-b border-gray-50 last:border-0">
-              <div className="w-8">
+            <div key={h.day_of_week} className="flex flex-wrap items-center gap-3 py-3 border-b border-gray-50 last:border-0">
+              <div className="flex items-center gap-3 w-full sm:w-auto">
                 <input
                   type="checkbox"
                   id={`day-${h.day_of_week}`}
                   checked={!!h.is_active}
                   onChange={(e) => updateHour(h.day_of_week, 'is_active', e.target.checked ? 1 : 0)}
-                  className="w-4 h-4 text-indigo-600 rounded"
+                  className="w-5 h-5 text-indigo-600 rounded flex-shrink-0"
                 />
+                <label
+                  htmlFor={`day-${h.day_of_week}`}
+                  className={`w-24 font-medium text-sm cursor-pointer mb-0 ${
+                    !h.is_active ? 'text-gray-400' : 'text-gray-700'
+                  }`}
+                >
+                  {DAY_NAMES[h.day_of_week]}
+                </label>
               </div>
-              <label
-                htmlFor={`day-${h.day_of_week}`}
-                className={`w-28 font-medium text-sm cursor-pointer mb-0 ${
-                  !h.is_active ? 'text-gray-400' : 'text-gray-700'
-                }`}
-              >
-                {DAY_NAMES[h.day_of_week]}
-              </label>
               {h.is_active ? (
-                <div className="flex items-center gap-2 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
                   <input
                     type="time"
                     value={h.start_time}
